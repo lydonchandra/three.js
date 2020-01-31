@@ -8,7 +8,7 @@
 
 	'use strict';
 
-	var B3DMLoader = ( function () {
+	var B3DMLoader = THREE.B3DMLoader = ( function () {
 
 		function B3DMLoader( manager, gltfLoader ) {
 
