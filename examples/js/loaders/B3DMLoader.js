@@ -1,91 +1,78 @@
-( function ( global, factory ) {
+THREE.B3DMLoader = ( function () {
 
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory( exports, require( 'three' ) ) :
-		typeof define === 'function' && define.amd ? define( [ 'exports', 'three' ], factory ) :
-			( global = global || self, factory( global.THREE = global.THREE || {}, global.THREE ) );
+	function B3DMLoader( manager, gltfLoader ) {
 
-}( this, function ( exports, THREE ) {
+		this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
-	'use strict';
+		this.gltfLoader = gltfLoader;
 
-	var B3DMLoader = THREE.B3DMLoader = ( function () {
+	}
 
-		function B3DMLoader( manager, gltfLoader ) {
+	B3DMLoader.prototype = {
 
-			this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+		constructor: B3DMLoader,
 
-			this.gltfLoader = gltfLoader;
+		load: function ( url, onLoad, onProgress, onError ) {
 
-		}
+			this.gltfLoader.load.call( this, url, onLoad, onProgress, onError );
 
-		B3DMLoader.prototype = {
+		},
 
-			constructor: B3DMLoader,
+		parse: function ( data, path, onLoad, onError ) {
 
-			load: function ( url, onLoad, onProgress, onError ) {
+			var magic = LoaderUtils.decodeText( new Uint8Array( data, 0, 4 ) );
 
-				this.gltfLoader.load.call( this, url, onLoad, onProgress, onError );
+			if ( magic === "b3dm" ) {
 
-			},
+				try {
 
-			parse: function ( data, path, onLoad, onError ) {
+					var b3dm = new B3DMExtension( data );
+					this.gltfLoader.parse( b3dm.bodyGlb, path, onLoad, onError );
 
-				var magic = THREE.LoaderUtils.decodeText( new Uint8Array( data, 0, 4 ) );
+				} catch ( error ) {
 
-				if ( magic === "b3dm" ) {
-
-					try {
-
-						var b3dm = new B3DMExtension( data );
-						this.gltfLoader.parse( b3dm.bodyGlb, path, onLoad, onError );
-
-					} catch ( error ) {
-
-						if ( onError ) onError( error );
-						return;
-
-					}
+					if ( onError ) onError( error );
+					return;
 
 				}
 
 			}
 
-		};
-
-		var B3DM_HEADER_LENGTH = 28;
-
-		function B3DMExtension( data ) {
-
-			this.name = "b3dm";
-			this.content = null;
-			this.body = null;
-			var headerView = new DataView( data, 0, B3DM_HEADER_LENGTH );
-
-			this.header = {
-
-				magic: THREE.LoaderUtils.decodeText( new Uint8Array( data.slice( 0, 4 ) ) ),
-				version: headerView.getUint32( 4, true ),
-				length: headerView.getUint32( 8, true ),
-				featureTableJSONByteLength: headerView.getUint32( 12, true ),
-				featureTableBinaryByteLength: headerView.getUint32( 16, true ),
-				batchTableJSONByteLength: headerView.getUint32( 20, true ),
-				batchTableBinaryByteLength: headerView.getUint32( 24, true )
-
-			};
-
-			this.body = data.slice( B3DM_HEADER_LENGTH, this.header.length );
-
-			var glbStartOffset = B3DM_HEADER_LENGTH + this.header.featureTableJSONByteLength + this.header.featureTableBinaryByteLength
-				+ this.header.batchTableJSONByteLength + this.header.batchTableBinaryByteLength;
-
-			this.bodyGlb = data.slice( glbStartOffset, this.header.length );
-
 		}
 
-		return B3DMLoader;
+	};
 
-	} )();
+	var B3DM_HEADER_LENGTH = 28;
 
-	exports.B3DMLoader = B3DMLoader;
+	function B3DMExtension( data ) {
 
-} ) );
+		this.name = "b3dm";
+		this.content = null;
+		this.body = null;
+		var headerView = new DataView( data, 0, B3DM_HEADER_LENGTH );
+
+		this.header = {
+
+			magic: LoaderUtils.decodeText( new Uint8Array( data.slice( 0, 4 ) ) ),
+			version: headerView.getUint32( 4, true ),
+			length: headerView.getUint32( 8, true ),
+			featureTableJSONByteLength: headerView.getUint32( 12, true ),
+			featureTableBinaryByteLength: headerView.getUint32( 16, true ),
+			batchTableJSONByteLength: headerView.getUint32( 20, true ),
+			batchTableBinaryByteLength: headerView.getUint32( 24, true )
+
+		};
+
+		this.body = data.slice( B3DM_HEADER_LENGTH, this.header.length );
+
+		var glbStartOffset = B3DM_HEADER_LENGTH + this.header.featureTableJSONByteLength + this.header.featureTableBinaryByteLength
+			+ this.header.batchTableJSONByteLength + this.header.batchTableBinaryByteLength;
+
+		this.bodyGlb = data.slice( glbStartOffset, this.header.length );
+
+	}
+
+	return B3DMLoader;
+
+} )();
+

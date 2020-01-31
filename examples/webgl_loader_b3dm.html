@@ -21,6 +21,8 @@
 
 			import { OrbitControls } from './jsm/controls/OrbitControls.js';
 			import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
+			import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
+			import { B3DMLoader } from './jsm/loaders/B3DMLoader.js';
 			import { RGBELoader } from './jsm/loaders/RGBELoader.js';
 			import { EquirectangularToCubeGenerator } from './jsm/loaders/EquirectangularToCubeGenerator.js';
 			import { PMREMGenerator } from './jsm/pmrem/PMREMGenerator.js';
@@ -37,52 +39,113 @@
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
 
-				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 20 );
-				camera.position.set( - 1.8, 0.9, 2.7 );
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 2000000 );
+				camera.position.set( - 1.8, 0.9, 2700 );
+
+				const ambientIntensity = 0.3;
+				const ambientColor = 0xFFFFFF;
+				const light1 = new THREE.AmbientLight( ambientColor, ambientIntensity );
+				light1.name = 'ambient_light';
+				camera.add( light1 );
 
 				scene = new THREE.Scene();
+				const hemiLight = new THREE.HemisphereLight();
+				hemiLight.name = 'hemi_light';
+				scene.add( hemiLight );
 
-				new RGBELoader()
-					.setDataType( THREE.UnsignedByteType )
-					.setPath( 'textures/equirectangular/' )
-					.load( 'pedestrian_overpass_2k.hdr', function ( texture ) {
+				const manager = new THREE.LoadingManager();
 
-						var cubeGenerator = new EquirectangularToCubeGenerator( texture, { resolution: 1024 } );
-						cubeGenerator.update( renderer );
+				const gltfLoader = new GLTFLoader( manager );
+				gltfLoader.setCrossOrigin( 'anonymous' );
+				gltfLoader.setDRACOLoader( new DRACOLoader() );
+				const b3dmLoader = new B3DMLoader( manager, gltfLoader );
 
-						var pmremGenerator = new PMREMGenerator( cubeGenerator.renderTarget.texture );
-						pmremGenerator.update( renderer );
+				let url = 'models/b3dm/MasterPlant_1c.b3dm';
+				b3dmLoader.load( url, ( gltf ) => {
 
-						var pmremCubeUVPacker = new PMREMCubeUVPacker( pmremGenerator.cubeLods );
-						pmremCubeUVPacker.update( renderer );
+					const gltfScene = gltf.scene || gltf.scenes[ 0 ];
 
-						var envMap = pmremCubeUVPacker.CubeUVRenderTarget.texture;
+					scene.add( gltfScene );
 
-						// model
+					const box = new THREE.Box3().setFromObject( gltfScene );
+					const size = box.getSize( new THREE.Vector3() ).length();
+					const center = box.getCenter( new THREE.Vector3() );
 
-						var loader = new GLTFLoader().setPath( 'models/gltf/DamagedHelmet/glTF/' );
-						loader.load( 'DamagedHelmet.gltf', function ( gltf ) {
+					camera.position.copy( center );
+					camera.position.x += size / 2.0;
+					camera.position.y += size / 5.0;
+					camera.position.z += size / 2.0;
+					camera.lookAt( center );
 
-							gltf.scene.traverse( function ( child ) {
 
-								if ( child.isMesh ) {
+				}, undefined );
 
-									child.material.envMap = envMap;
-
-								}
-
-							} );
-
-							scene.add( gltf.scene );
-
-						} );
-
-						pmremGenerator.dispose();
-						pmremCubeUVPacker.dispose();
-
-						scene.background = cubeGenerator.renderTarget;
-
-					} );
+				// new RGBELoader()
+				// 	.setDataType( THREE.UnsignedByteType )
+				// 	.setPath( 'textures/equirectangular/' )
+				// 	.load( 'pedestrian_overpass_2k.hdr', function ( texture ) {
+				//
+				// 		var cubeGenerator = new EquirectangularToCubeGenerator( texture, { resolution: 1024 } );
+				// 		cubeGenerator.update( renderer );
+				//
+				// 		var pmremGenerator = new PMREMGenerator( cubeGenerator.renderTarget.texture );
+				// 		pmremGenerator.update( renderer );
+				//
+				// 		var pmremCubeUVPacker = new PMREMCubeUVPacker( pmremGenerator.cubeLods );
+				// 		pmremCubeUVPacker.update( renderer );
+				//
+				// 		var envMap = pmremCubeUVPacker.CubeUVRenderTarget.texture;
+				//
+				// 		// model
+				//
+				// 		// var loader = new GLTFLoader().setPath( 'models/gltf/DamagedHelmet/glTF/' );
+				// 		// loader.load( 'DamagedHelmet.gltf', function ( gltf ) {
+				// 		//
+				// 		// 	gltf.scene.traverse( function ( child ) {
+				// 		//
+				// 		// 		if ( child.isMesh ) {
+				// 		//
+				// 		// 			child.material.envMap = envMap;
+				// 		//
+				// 		// 		}
+				// 		//
+				// 		// 	} );
+				// 		//
+				// 		// 	scene.add( gltf.scene );
+				// 		//
+				// 		// } );
+				// 		//
+				// 		// pmremGenerator.dispose();
+				// 		// pmremCubeUVPacker.dispose();
+				//
+				// 		const manager = new THREE.LoadingManager();
+				//
+				// 		const gltfLoader = new GLTFLoader( manager );
+				// 		gltfLoader.setCrossOrigin( 'anonymous' );
+				// 		gltfLoader.setDRACOLoader( new DRACOLoader() );
+				// 		const b3dmLoader = new B3DMLoader( manager, gltfLoader );
+				//
+				// 		const blobURLs = [];
+				//
+				// 		let url = 'models/b3dm/MasterPlant_1c.b3dm';
+				// 		b3dmLoader.load( url, ( gltf ) => {
+				//
+				// 			scene.add( gltf.scene );
+				// 			// const scene = gltf.scene || gltf.scenes[ 0 ];
+				// 			// const clips = gltf.animations || [];
+				// 			// this.setContent(scene, clips);
+				// 			//
+				// 			// blobURLs.forEach(URL.revokeObjectURL);
+				//
+				// 			// See: https://github.com/google/draco/issues/349
+				// 			// THREE.DRACOLoader.releaseDecoderModule();
+				//
+				//
+				// 		}, undefined );
+				//
+				// 		scene.background = cubeGenerator.renderTarget;
+				//
+				// 	} );
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
