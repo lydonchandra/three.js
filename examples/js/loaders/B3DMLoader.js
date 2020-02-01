@@ -20,7 +20,7 @@ THREE.B3DMLoader = ( function () {
 
 		parse: function ( data, path, onLoad, onError ) {
 
-			var magic = LoaderUtils.decodeText( new Uint8Array( data, 0, 4 ) );
+			var magic = THREE.LoaderUtils.decodeText( new Uint8Array( data, 0, 4 ) );
 
 			if ( magic === "b3dm" ) {
 
@@ -53,7 +53,7 @@ THREE.B3DMLoader = ( function () {
 
 		this.header = {
 
-			magic: LoaderUtils.decodeText( new Uint8Array( data.slice( 0, 4 ) ) ),
+			magic: THREE.LoaderUtils.decodeText( new Uint8Array( data.slice( 0, 4 ) ) ),
 			version: headerView.getUint32( 4, true ),
 			length: headerView.getUint32( 8, true ),
 			featureTableJSONByteLength: headerView.getUint32( 12, true ),
