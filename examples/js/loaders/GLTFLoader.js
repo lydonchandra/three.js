@@ -132,6 +132,86 @@ THREE.GLTFLoader = ( function () {
 
 		},
 
+		isShouldUseTextureHack( gltfParserJson ) {
+
+			let isShouldUseTextureHack = false;
+
+			if ( gltfParserJson.materials && gltfParserJson.materials.length > 0 ) {
+
+				for ( let material of gltfParserJson.materials ) {
+
+					for ( let [ key, value ] of Object.entries( material ) ) {
+
+						if ( key === 'extensions' ) {
+
+							for ( let [ key2, value2 ] of Object.entries( value ) ) {
+
+								if ( key2 === 'KHR_techniques_webgl' ) {
+
+									isShouldUseTextureHack = true;
+									return isShouldUseTextureHack;
+
+								}
+
+							}
+
+						}
+
+					}
+
+				}
+
+			}
+
+			return isShouldUseTextureHack;
+
+		},
+
+		useTextureHack( gltfParserJson ) {
+
+			let hackMaterials = [];
+			for ( let idx = 0; idx < gltfParserJson.materials.length; idx ++ ) {
+
+				let material = gltfParserJson.materials[ idx ];
+
+				for ( let [ key, value ] of Object.entries( material ) ) {
+
+					if ( key === 'extensions' ) {
+
+						for ( let [ key2, value2 ] of Object.entries( value ) ) {
+
+							if ( key2 === 'KHR_techniques_webgl' ) {
+
+								if ( value[ key2 ].values &&
+									value[ key2 ].values.u_tex &&
+									value[ key2 ].values.u_tex.index !== null ) {
+
+
+									hackMaterials.push( {
+										"pbrMetallicRoughness": {
+											"baseColorTexture": {
+												"index": value[ key2 ].values.u_tex.index
+											}
+										},
+										"name": "hackMaterial_" + value[ key2 ].values.u_tex.index
+									} );
+
+								}
+
+							}
+
+						}
+
+					}
+
+				}
+
+			}
+
+			gltfParserJson.materials = hackMaterials;
+
+		},
+
 		parse: function ( data, path, onLoad, onError ) {
 
 			var content;
@@ -221,6 +301,12 @@ THREE.GLTFLoader = ( function () {
 					}
 
 				}
+
+			}
+
+			if ( this.isShouldUseTextureHack( json ) ) {
+
+				this.useTextureHack( json );
 
 			}
 
@@ -1187,7 +1273,7 @@ THREE.GLTFLoader = ( function () {
 
 		// Invalid URL
 		if ( typeof url !== 'string' || url === '' ) return '';
-		
+
 		// Host Relative URL
 		if ( /^https?:\/\//i.test( path ) && /^\//.test( url ) ) {
 
