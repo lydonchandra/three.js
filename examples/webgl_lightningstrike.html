@@ -9,7 +9,7 @@
 	<body>
 
 		<div id="container"></div>
-		<div id="info"><a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> webgl - lightning strike</div>
+		<div id="info"><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> webgl - lightning strike</div>
 
 		<script type="module">
 
@@ -54,9 +54,7 @@
 				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
+				renderer.outputEncoding = THREE.sRGBEncoding;
 
 				container.appendChild( renderer.domElement );
 
@@ -417,17 +415,16 @@
 							 r + "posz.jpg", r + "negz.jpg" ];
 
 				var textureCube = new THREE.CubeTextureLoader().load( urls );
-				textureCube.format = THREE.RGBFormat;
 				textureCube.mapping = THREE.CubeReflectionMapping;
+				textureCube.encoding = THREE.sRGBEncoding;
 
 				var sphereMaterial = new THREE.MeshPhysicalMaterial( {
 					transparent: true,
+					transmission: .96,
 					depthWrite: false,
-					opacity: 0.15,
-					color: 0,
-					metalness: 1,
+					color: 'white',
+					metalness: 0,
 					roughness: 0,
-					reflectivity: 0,
 					envMap: textureCube
 				} );
 
@@ -566,27 +563,15 @@
 
 				// THREE.Sphere mouse raycasting
 
-				window.addEventListener( 'mousemove', onTouchMove );
-				window.addEventListener( 'touchmove', onTouchMove );
+				container.style.touchAction = 'none';
+				container.addEventListener( 'pointermove', onPointerMove, false );
 
-				function onTouchMove( event ) {
+				function onPointerMove( event ) {
 
-					var x, y;
+					if ( event.isPrimary === false ) return;
 
-					if ( event.changedTouches ) {
-
-						x = event.changedTouches[ 0 ].pageX;
-						y = event.changedTouches[ 0 ].pageY;
-
-					} else {
-
-						x = event.clientX;
-						y = event.clientY;
-
-					}
-
-					mouse.x = ( x / window.innerWidth ) * 2 - 1;
-					mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+					mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+					mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
 					checkIntersection();
 
@@ -720,7 +705,7 @@
 				}
 
 				var starGeometry = new THREE.BufferGeometry();
-				starGeometry.addAttribute( 'position', new THREE.Float32BufferAttribute( starVertices, 3 ) );
+				starGeometry.setAttribute( 'position', new THREE.Float32BufferAttribute( starVertices, 3 ) );
 				var starMesh = new THREE.Mesh( starGeometry, new THREE.MeshBasicMaterial( { color: 0x020900 } ) );
 				starMesh.scale.multiplyScalar( 6 );
 

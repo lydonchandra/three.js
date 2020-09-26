@@ -2,11 +2,8 @@ import { Line } from './Line.js';
 import { Vector3 } from '../math/Vector3.js';
 import { Float32BufferAttribute } from '../core/BufferAttribute.js';
 
-/**
- * @author mrdoob / http://mrdoob.com/
- */
-
-var _start, _end;
+const _start = new Vector3();
+const _end = new Vector3();
 
 function LineSegments( geometry, material ) {
 
@@ -24,14 +21,7 @@ LineSegments.prototype = Object.assign( Object.create( Line.prototype ), {
 
 	computeLineDistances: function () {
 
-		if ( _end === undefined ) {
-
-			_start = new Vector3();
-			_end = new Vector3();
-
-		}
-
-		var geometry = this.geometry;
+		const geometry = this.geometry;
 
 		if ( geometry.isBufferGeometry ) {
 
@@ -39,10 +29,10 @@ LineSegments.prototype = Object.assign( Object.create( Line.prototype ), {
 
 			if ( geometry.index === null ) {
 
-				var positionAttribute = geometry.attributes.position;
-				var lineDistances = [];
+				const positionAttribute = geometry.attributes.position;
+				const lineDistances = [];
 
-				for ( var i = 0, l = positionAttribute.count; i < l; i += 2 ) {
+				for ( let i = 0, l = positionAttribute.count; i < l; i += 2 ) {
 
 					_start.fromBufferAttribute( positionAttribute, i );
 					_end.fromBufferAttribute( positionAttribute, i + 1 );
@@ -52,7 +42,7 @@ LineSegments.prototype = Object.assign( Object.create( Line.prototype ), {
 
 				}
 
-				geometry.addAttribute( 'lineDistance', new Float32BufferAttribute( lineDistances, 1 ) );
+				geometry.setAttribute( 'lineDistance', new Float32BufferAttribute( lineDistances, 1 ) );
 
 			} else {
 
@@ -62,10 +52,10 @@ LineSegments.prototype = Object.assign( Object.create( Line.prototype ), {
 
 		} else if ( geometry.isGeometry ) {
 
-			var vertices = geometry.vertices;
-			var lineDistances = geometry.lineDistances;
+			const vertices = geometry.vertices;
+			const lineDistances = geometry.lineDistances;
 
-			for ( var i = 0, l = vertices.length; i < l; i += 2 ) {
+			for ( let i = 0, l = vertices.length; i < l; i += 2 ) {
 
 				_start.copy( vertices[ i ] );
 				_end.copy( vertices[ i + 1 ] );

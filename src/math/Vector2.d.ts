@@ -2,15 +2,19 @@ import { Matrix3 } from './Matrix3';
 import { BufferAttribute } from './../core/BufferAttribute';
 
 /**
- * ( interface Vector&lt;T&gt; )
+ * ( interface Vector<T> )
  *
- * Abstract interface of Vector2, Vector3 and Vector4.
+ * Abstract interface of {@link https://github.com/mrdoob/three.js/blob/master/src/math/Vector2.js|Vector2},
+ * {@link https://github.com/mrdoob/three.js/blob/master/src/math/Vector3.js|Vector3}
+ * and {@link https://github.com/mrdoob/three.js/blob/master/src/math/Vector4.js|Vector4}.
+ *
  * Currently the members of Vector is NOT type safe because it accepts different typed vectors.
+ *
  * Those definitions will be changed when TypeScript innovates Generics to be type safe.
  *
  * @example
- * var v:THREE.Vector = new THREE.Vector3();
- * v.addVectors(new THREE.Vector2(0, 1), new THREE.Vector2(2, 3));		// invalid but compiled successfully
+ * const v:THREE.Vector = new THREE.Vector3();
+ * v.addVectors(new THREE.Vector2(0, 1), new THREE.Vector2(2, 3)); // invalid but compiled successfully
  */
 export interface Vector {
 	setComponent( index: number, value: number ): this;
@@ -31,7 +35,7 @@ export interface Vector {
 	 *
 	 * add(v:T):T;
 	 */
-	add( v: Vector, w?: Vector ): this;
+	add( v: Vector ): this;
 
 	/**
 	 * addVectors(a:T, b:T):T;
@@ -134,11 +138,18 @@ export class Vector2 implements Vector {
 
 	constructor( x?: number, y?: number );
 
+	/**
+	 * @default 0
+	 */
 	x: number;
+
+	/**
+	 * @default 0
+	 */
 	y: number;
 	width: number;
 	height: number;
-	isVector2: true;
+	readonly isVector2: true;
 
 	/**
 	 * Sets value of this vector.
@@ -396,11 +407,18 @@ export class Vector2 implements Vector {
 	equals( v: Vector2 ): boolean;
 
 	/**
-	 * Sets this vector's x value to be array[offset] and y value to be array[offset + 1].
+	 * Sets this vector's x and y value from the provided array.
 	 * @param array the source array.
 	 * @param offset (optional) offset into the array. Default is 0.
 	 */
 	fromArray( array: number[], offset?: number ): this;
+
+	/**
+	 * Sets this vector's x and y value from the provided array-like.
+	 * @param array the source array-like.
+	 * @param offset (optional) offset into the array-like. Default is 0.
+	 */
+	fromArray( array: ArrayLike<number>, offset?: number ): this;
 
 	/**
 	 * Returns an array [x, y], or copies x and y into the provided array.
@@ -433,23 +451,8 @@ export class Vector2 implements Vector {
 	rotateAround( center: Vector2, angle: number ): this;
 
 	/**
-	 * Computes the Manhattan length of this vector.
-	 *
-	 * @return {number}
-	 *
-	 * @see {@link http://en.wikipedia.org/wiki/Taxicab_geometry|Wikipedia: Taxicab Geometry}
+	 * Sets this vector's x and y from Math.random
 	 */
-	manhattanLength(): number;
-
-	/**
-	 * Computes the Manhattan length (distance) from this vector to the given vector v
-	 *
-	 * @param {Vector2} v
-	 *
-	 * @return {number}
-	 *
-	 * @see {@link http://en.wikipedia.org/wiki/Taxicab_geometry|Wikipedia: Taxicab Geometry}
-	 */
-	manhattanDistanceTo( v: Vector2 ): number;
+	random(): this;
 
 }

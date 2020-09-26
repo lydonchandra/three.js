@@ -9,7 +9,7 @@
 	<body>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - THREE.RectAreaLight<br/>
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - THREE.RectAreaLight<br/>
 			by <a href="http://github.com/abelnation" target="_blank" rel="noopener">abelnation</a>
 		</div>
 
@@ -21,13 +21,14 @@
 			import { GUI } from './jsm/libs/dat.gui.module.js';
 
 			import { OrbitControls } from './jsm/controls/OrbitControls.js';
+			import { RectAreaLightHelper } from './jsm/helpers/RectAreaLightHelper.js';
 			import { RectAreaLightUniformsLib } from './jsm/lights/RectAreaLightUniformsLib.js';
 
 			var renderer, scene, camera;
 
 			var origin = new THREE.Vector3();
 
-			var rectLight;
+			var rectLight, rectLightHelper;
 
 			var param = {};
 			var stats;
@@ -42,21 +43,20 @@
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
 				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
+				renderer.outputEncoding = THREE.sRGBEncoding;
 				document.body.appendChild( renderer.domElement );
 
 				// Check for float-RT support
 				// TODO (abelnation): figure out fall-back for float textures
 
-				if ( ! renderer.extensions.get( 'OES_texture_float' ) ) {
+				if ( renderer.capabilities.isWebGL2 === false && ! renderer.extensions.get( 'OES_texture_float' ) ) {
 
 					alert( 'OES_texture_float not supported' );
 					throw 'missing webgl extension';
 
 				}
 
-				if ( ! renderer.extensions.get( 'OES_texture_float_linear' ) ) {
+				if ( renderer.capabilities.isWebGL2 === false && ! renderer.extensions.get( 'OES_texture_float_linear' ) ) {
 
 					alert( 'OES_texture_float_linear not supported' );
 					throw 'missing webgl extension';
@@ -77,13 +77,8 @@
 				rectLight.position.set( 5, 5, 0 );
 				scene.add( rectLight );
 
-				var rectLightMesh = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshBasicMaterial( { side: THREE.BackSide } ) );
-				rectLightMesh.scale.x = rectLight.width;
-				rectLightMesh.scale.y = rectLight.height;
-				rectLight.add( rectLightMesh );
-
-				var rectLightMeshBack = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshBasicMaterial( { color: 0x080808 } ) );
-				rectLightMesh.add( rectLightMeshBack );
+				rectLightHelper = new RectAreaLightHelper( rectLight );
+				rectLight.add( rectLightHelper );
 
 				var geoFloor = new THREE.BoxBufferGeometry( 2000, 0.1, 2000 );
 				var matStdFloor = new THREE.MeshStandardMaterial( { color: 0x808080, roughness: 0, metalness: 0 } );
@@ -143,28 +138,24 @@
 				lightFolder.add( param, 'width', 1, 20 ).step( 0.1 ).onChange( function ( val ) {
 
 					rectLight.width = val;
-					rectLightMesh.scale.x = val;
 
 				} );
 
 				lightFolder.add( param, 'height', 1, 20 ).step( 0.1 ).onChange( function ( val ) {
 
 					rectLight.height = val;
-					rectLightMesh.scale.y = val;
 
 				} );
 
 				lightFolder.addColor( param, 'color' ).onChange( function ( val ) {
 
 					rectLight.color.setHex( val );
-					rectLightMesh.material.color.copy( rectLight.color ).multiplyScalar( rectLight.intensity );
 
 				} );
 
 				lightFolder.add( param, 'intensity', 0.0, 4.0 ).step( 0.01 ).onChange( function ( val ) {
 
 					rectLight.intensity = val;
-					rectLightMesh.material.color.copy( rectLight.color ).multiplyScalar( rectLight.intensity );
 
 				} );
 
@@ -249,6 +240,8 @@
 					rectLight.lookAt( origin );
 
 				}
+
+				rectLightHelper.update();
 
 				renderer.render( scene, camera );
 

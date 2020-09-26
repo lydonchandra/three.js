@@ -1,7 +1,3 @@
-/**
- * @author sunag / http://www.sunag.com.br/
- */
-
 import { TempNode } from '../core/TempNode.js';
 
 function SubSlotNode( slots ) {
@@ -26,7 +22,7 @@ SubSlotNode.prototype.generate = function ( builder, output ) {
 
 	if ( this.slots[ builder.slot ] ) {
 
-		return this.slots[ builder.slot ].build( builder, output )
+		return this.slots[ builder.slot ].build( builder, output );
 
 	}
 

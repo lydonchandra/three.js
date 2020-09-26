@@ -1,60 +1,49 @@
-import { Material } from './../materials/Material';
-import { LoaderHandler } from './FileLoader';
-
-// Loaders //////////////////////////////////////////////////////////////////////////////////
+import { LoadingManager } from './LoadingManager';
 
 /**
  * Base class for implementing loaders.
- *
- * Events:
- *		 load
- *				 Dispatched when the image has completed loading
- *				 content — loaded image
- *
- *		 error
- *
- *					Dispatched when the image can't be loaded
- *					message — error message
  */
 export class Loader {
 
-	constructor();
+	constructor( manager?: LoadingManager );
 
 	/**
-	 * Will be called when load starts.
-	 * The default is a function with empty body.
-	 */
-	onLoadStart: () => void;
-
-	/**
-	 * Will be called while load progresses.
-	 * The default is a function with empty body.
-	 */
-	onLoadProgress: () => void;
-
-	/**
-	 * Will be called when load completes.
-	 * The default is a function with empty body.
-	 */
-	onLoadComplete: () => void;
-
-	/**
-	 * default — null.
-	 * If set, assigns the crossOrigin attribute of the image to the value of crossOrigin, prior to starting the load.
+	 * @default 'anonymous'
 	 */
 	crossOrigin: string;
 
 	/**
-	 * @deprecated Use THREE.LoaderUtils.extractUrlBase() instead.
+	 * @default: false
 	 */
-	extractUrlBase( url: string ): string;
-	initMaterials( materials: Material[], texturePath: string ): Material[];
-	createMaterial(
-		m: Material,
-		texturePath: string,
-		crossOrigin?: string
-	): boolean;
+	withCredentials: boolean;
 
-	static Handlers: LoaderHandler;
+	/**
+	 * @default ''
+	 */
+	path: string;
+
+	/**
+	 * @default ''
+	 */
+	resourcePath: string;
+	manager: LoadingManager;
+
+	/**
+	 * @default {}
+	 */
+	requestHeader: { [header: string]: string };
+
+	/*
+	load(): void;
+	parse(): void;
+	*/
+
+	loadAsync( url: string, onProgress?: ( event: ProgressEvent ) => void ): Promise<any>;
+
+	setCrossOrigin( crossOrigin: string ): this;
+	setWithCredentials( value: boolean ): this;
+	setPath( path: string ): this;
+	setResourcePath( resourcePath: string ): this;
+	setRequestHeader( requestHeader: { [header: string]: string } ): this;
 
 }

@@ -154,9 +154,9 @@ vec3 BRDF_Specular_GGX( const in IncidentLight incidentLight, const in vec3 view
 
 vec2 LTC_Uv( const in vec3 N, const in vec3 V, const in float roughness ) {
 
-	const float LUT_SIZE  = 64.0;
+	const float LUT_SIZE = 64.0;
 	const float LUT_SCALE = ( LUT_SIZE - 1.0 ) / LUT_SIZE;
-	const float LUT_BIAS  = 0.5 / LUT_SIZE;
+	const float LUT_BIAS = 0.5 / LUT_SIZE;
 
 	float dotNV = saturate( dot( N, V ) );
 
@@ -244,9 +244,9 @@ vec3 LTC_Evaluate( const in vec3 N, const in vec3 V, const in vec3 P, const in m
 	float len = length( vectorFormFactor );
 	float z = vectorFormFactor.z / len;
 
-	const float LUT_SIZE  = 64.0;
+	const float LUT_SIZE = 64.0;
 	const float LUT_SCALE = ( LUT_SIZE - 1.0 ) / LUT_SIZE;
-	const float LUT_BIAS  = 0.5 / LUT_SIZE;
+	const float LUT_BIAS = 0.5 / LUT_SIZE;
 
 	// tabulated horizon-clipped sphere, apparently...
 	vec2 uv = vec2( z * 0.5 + 0.5, len );
@@ -336,4 +336,35 @@ float GGXRoughnessToBlinnExponent( const in float ggxRoughness ) {
 float BlinnExponentToGGXRoughness( const in float blinnExponent ) {
 	return sqrt( 2.0 / ( blinnExponent + 2.0 ) );
 }
+
+#if defined( USE_SHEEN )
+
+// https://github.com/google/filament/blob/master/shaders/src/brdf.fs#L94
+float D_Charlie(float roughness, float NoH) {
+	// Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF"
+	float invAlpha = 1.0 / roughness;
+	float cos2h = NoH * NoH;
+	float sin2h = max(1.0 - cos2h, 0.0078125); // 2^(-14/2), so sin2h^2 > 0 in fp16
+	return (2.0 + invAlpha) * pow(sin2h, invAlpha * 0.5) / (2.0 * PI);
+}
+
+// https://github.com/google/filament/blob/master/shaders/src/brdf.fs#L136
+float V_Neubelt(float NoV, float NoL) {
+	// Neubelt and Pettineo 2013, "Crafting a Next-gen Material Pipeline for The Order: 1886"
+	return saturate(1.0 / (4.0 * (NoL + NoV - NoL * NoV)));
+}
+
+vec3 BRDF_Specular_Sheen( const in float roughness, const in vec3 L, const in GeometricContext geometry, vec3 specularColor ) {
+
+	vec3 N = geometry.normal;
+	vec3 V = geometry.viewDir;
+
+	vec3 H = normalize( V + L );
+	float dotNH = saturate( dot( N, H ) );
+
+	return specularColor * D_Charlie( roughness, dotNH ) * V_Neubelt( dot(N, V), dot(N, L) );
+
+}
+
+#endif
 `;

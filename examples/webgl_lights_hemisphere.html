@@ -18,7 +18,7 @@
 
 		<div id="container"></div>
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - webgl hemisphere light example<br/>
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - webgl hemisphere light example<br/>
 			flamingo by <a href="http://mirada.com/">mirada</a> from <a href="http://ro.me">rome</a><br/><br/>
 			<button id="hemisphereButton">toggle hemisphere light</button>
 			<button id="directionalButton">toggle directional light</button>
@@ -66,7 +66,7 @@
 			import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
 
 
-			var camera, scene, renderer, dirLight, dirLightHeper, hemiLight, hemiLightHelper;
+			var camera, scene, renderer, dirLight, dirLightHelper, hemiLight, hemiLightHelper;
 			var mixers = [];
 			var stats;
 
@@ -120,8 +120,8 @@
 				dirLight.shadow.camera.far = 3500;
 				dirLight.shadow.bias = - 0.0001;
 
-				dirLightHeper = new THREE.DirectionalLightHelper( dirLight, 10 );
-				scene.add( dirLightHeper );
+				dirLightHelper = new THREE.DirectionalLightHelper( dirLight, 10 );
+				scene.add( dirLightHelper );
 
 				// GROUND
 
@@ -190,10 +190,7 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				container.appendChild( renderer.domElement );
-
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
-
+				renderer.outputEncoding = THREE.sRGBEncoding;
 				renderer.shadowMap.enabled = true;
 
 				// STATS
@@ -217,7 +214,7 @@
 				directionalButton.addEventListener( 'click', function () {
 
 					dirLight.visible = ! dirLight.visible;
-					dirLightHeper.visible = ! dirLightHeper.visible;
+					dirLightHelper.visible = ! dirLightHelper.visible;
 
 				} );
 

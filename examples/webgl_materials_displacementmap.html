@@ -5,19 +5,13 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
-		<style>
-			#vt { display:none }
-			#vt, #vt a { color:orange; }
-		</style>
 	</head>
 
 	<body>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - (<span id="description">normal + ao + displacement + environment</span>) map demo.<br />
-			ninja head from <a href="http://developer.amd.com/tools-and-sdks/archive/legacy-cpu-gpu-tools/amd-gpu-meshmapper/" target="_blank" rel="noopener">AMD GPU MeshMapper</a>
-
-			<div id="vt">displacement mapping requires vertex textures</div>
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - (normal + ao + displacement + environment) map demo.<br />
+			ninja head from <a href="https://gpuopen.com/archive/gamescgi/amd-gpu-meshmapper/" target="_blank" rel="noopener">AMD GPU MeshMapper</a>
 		</div>
 
 		<script type="module">
@@ -112,9 +106,7 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				container.appendChild( renderer.domElement );
-
-				renderer.gammaInput = true;
-				renderer.gammaOutput = true;
+				renderer.outputEncoding = THREE.sRGBEncoding;
 
 				//
 
@@ -157,11 +149,12 @@
 				];
 
 				var reflectionCube = new THREE.CubeTextureLoader().load( urls );
+				reflectionCube.encoding = THREE.sRGBEncoding;
 
 				// textures
 
 				var textureLoader = new THREE.TextureLoader();
-				var normalMap = textureLoader.load( "models/obj/ninja/normal.jpg" );
+				var normalMap = textureLoader.load( "models/obj/ninja/normal.png" );
 				var aoMap = textureLoader.load( "models/obj/ninja/ao.jpg" );
 				var displacementMap = textureLoader.load( "models/obj/ninja/displacement.jpg" );
 
@@ -207,12 +200,6 @@
 
 				//
 
-				var description = "normal + ao" + ( renderer.capabilities.vertexTextures ? " + displacement + environment" : " + <strike>displacement</strike>" );
-				document.getElementById( "description" ).innerHTML = description;
-				document.getElementById( "vt" ).style.display = renderer.capabilities.vertexTextures ? "none" : "block";
-
-				//
-
 				stats = new Stats();
 				container.appendChild( stats.dom );
 
@@ -242,6 +229,8 @@
 			function animate() {
 
 				requestAnimationFrame( animate );
+
+				controls.update();
 
 				stats.begin();
 				render();

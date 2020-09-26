@@ -9,7 +9,7 @@
 	<body>
 
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - procedural 3D text by <a href="http://www.lab4games.net/zz85/blog" target="_blank" rel="noopener">zz85</a> &amp; alteredq<br/>
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - procedural 3D text by <a href="http://www.lab4games.net/zz85/blog" target="_blank" rel="noopener">zz85</a> &amp; alteredq<br/>
 			type to enter new text, drag to spin the text<br/>
 			<button id="color">change color</button>
 			<button id="font">change font</button>
@@ -23,8 +23,6 @@
 			import * as THREE from '../build/three.module.js';
 
 			import Stats from './jsm/libs/stats.module.js';
-
-			import { GeometryUtils } from './jsm/utils/GeometryUtils.js';
 
 			THREE.Cache.enabled = true;
 
@@ -79,10 +77,10 @@
 			for ( var i in weightMap ) reverseWeightMap[ weightMap[ i ] ] = i;
 
 			var targetRotation = 0;
-			var targetRotationOnMouseDown = 0;
+			var targetRotationOnPointerDown = 0;
 
-			var mouseX = 0;
-			var mouseXOnMouseDown = 0;
+			var pointerX = 0;
+			var pointerXOnPointerDown = 0;
 
 			var windowHalfX = window.innerWidth / 2;
 
@@ -194,9 +192,9 @@
 
 				// EVENTS
 
-				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-				document.addEventListener( 'touchstart', onDocumentTouchStart, false );
-				document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+				container.style.touchAction = 'none';
+				container.addEventListener( 'pointerdown', onPointerDown, false );
+
 				document.addEventListener( 'keypress', onDocumentKeyPress, false );
 				document.addEventListener( 'keydown', onDocumentKeyDown, false );
 
@@ -357,6 +355,8 @@
 				textGeo.computeBoundingBox();
 				textGeo.computeVertexNormals();
 
+				var triangle = new THREE.Triangle();
+
 				// "fix" side normals by removing z-component of normals for side faces
 				// (this doesn't work well for beveled geometry as then we lose nice curvature around z-axis)
 
@@ -381,7 +381,7 @@
 							var vb = textGeo.vertices[ face.b ];
 							var vc = textGeo.vertices[ face.c ];
 
-							var s = GeometryUtils.triangleArea( va, vb, vc );
+							var s = triangle.set( va, vb, vc ).getArea();
 
 							if ( s > triangleAreaHeuristics ) {
 
@@ -444,66 +444,34 @@
 
 			}
 
-			function onDocumentMouseDown( event ) {
+			function onPointerDown( event ) {
 
-				event.preventDefault();
+				if ( event.isPrimary === false ) return;
 
-				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-				document.addEventListener( 'mouseup', onDocumentMouseUp, false );
-				document.addEventListener( 'mouseout', onDocumentMouseOut, false );
+				pointerXOnPointerDown = event.clientX - windowHalfX;
+				targetRotationOnPointerDown = targetRotation;
 
-				mouseXOnMouseDown = event.clientX - windowHalfX;
-				targetRotationOnMouseDown = targetRotation;
-
-			}
-
-			function onDocumentMouseMove( event ) {
-
-				mouseX = event.clientX - windowHalfX;
-
-				targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.02;
+				document.addEventListener( 'pointermove', onPointerMove, false );
+				document.addEventListener( 'pointerup', onPointerUp, false );
 
 			}
 
-			function onDocumentMouseUp() {
+			function onPointerMove( event ) {
 
-				document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
-				document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
-				document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
+				if ( event.isPrimary === false ) return;
 
-			}
+				pointerX = event.clientX - windowHalfX;
 
-			function onDocumentMouseOut() {
-
-				document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
-				document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
-				document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
+				targetRotation = targetRotationOnPointerDown + ( pointerX - pointerXOnPointerDown ) * 0.02;
 
 			}
 
-			function onDocumentTouchStart( event ) {
+			function onPointerUp() {
 
-				if ( event.touches.length == 1 ) {
+				if ( event.isPrimary === false ) return;
 
-					event.preventDefault();
-
-					mouseXOnMouseDown = event.touches[ 0 ].pageX - windowHalfX;
-					targetRotationOnMouseDown = targetRotation;
-
-				}
-
-			}
-
-			function onDocumentTouchMove( event ) {
-
-				if ( event.touches.length == 1 ) {
-
-					event.preventDefault();
-
-					mouseX = event.touches[ 0 ].pageX - windowHalfX;
-					targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.05;
-
-				}
+				document.removeEventListener( 'pointermove', onPointerMove );
+				document.removeEventListener( 'pointerup', onPointerUp );
 
 			}
 

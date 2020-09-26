@@ -1,8 +1,3 @@
-/**
- * @author mikael emtinger / http://gomo.se/
- * @author alteredq / http://alteredqualia.com/
- */
-
 import { Vector2 } from '../math/Vector2.js';
 import { Vector3 } from '../math/Vector3.js';
 import { Matrix4 } from '../math/Matrix4.js';
@@ -13,12 +8,23 @@ import { InterleavedBuffer } from '../core/InterleavedBuffer.js';
 import { InterleavedBufferAttribute } from '../core/InterleavedBufferAttribute.js';
 import { SpriteMaterial } from '../materials/SpriteMaterial.js';
 
-var _geometry;
+let _geometry;
 
-var _intersectPoint, _worldScale, _mvPosition;
-var _alignedPosition, _rotatedPosition, _viewWorldMatrix;
-var _vA, _vB, _vC;
-var _uvA, _uvB, _uvC;
+const _intersectPoint = new Vector3();
+const _worldScale = new Vector3();
+const _mvPosition = new Vector3();
+
+const _alignedPosition = new Vector2();
+const _rotatedPosition = new Vector2();
+const _viewWorldMatrix = new Matrix4();
+
+const _vA = new Vector3();
+const _vB = new Vector3();
+const _vC = new Vector3();
+
+const _uvA = new Vector2();
+const _uvB = new Vector2();
+const _uvC = new Vector2();
 
 function Sprite( material ) {
 
@@ -30,18 +36,18 @@ function Sprite( material ) {
 
 		_geometry = new BufferGeometry();
 
-		var float32Array = new Float32Array( [
+		const float32Array = new Float32Array( [
 			- 0.5, - 0.5, 0, 0, 0,
 			0.5, - 0.5, 0, 1, 0,
 			0.5, 0.5, 0, 1, 1,
 			- 0.5, 0.5, 0, 0, 1
 		] );
 
-		var interleavedBuffer = new InterleavedBuffer( float32Array, 5 );
+		const interleavedBuffer = new InterleavedBuffer( float32Array, 5 );
 
 		_geometry.setIndex( [ 0, 1, 2,	0, 2, 3 ] );
-		_geometry.addAttribute( 'position', new InterleavedBufferAttribute( interleavedBuffer, 3, 0, false ) );
-		_geometry.addAttribute( 'uv', new InterleavedBufferAttribute( interleavedBuffer, 2, 3, false ) );
+		_geometry.setAttribute( 'position', new InterleavedBufferAttribute( interleavedBuffer, 3, 0, false ) );
+		_geometry.setAttribute( 'uv', new InterleavedBufferAttribute( interleavedBuffer, 2, 3, false ) );
 
 	}
 
@@ -60,41 +66,28 @@ Sprite.prototype = Object.assign( Object.create( Object3D.prototype ), {
 
 	raycast: function ( raycaster, intersects ) {
 
-		if ( _uvC === undefined ) {
+		if ( raycaster.camera === null ) {
 
-			_intersectPoint = new Vector3();
-			_worldScale = new Vector3();
-			_mvPosition = new Vector3();
-
-			_alignedPosition = new Vector2();
-			_rotatedPosition = new Vector2();
-			_viewWorldMatrix = new Matrix4();
-
-			_vA = new Vector3();
-			_vB = new Vector3();
-			_vC = new Vector3();
-
-			_uvA = new Vector2();
-			_uvB = new Vector2();
-			_uvC = new Vector2();
+			console.error( 'THREE.Sprite: "Raycaster.camera" needs to be set in order to raycast against sprites.' );
 
 		}
 
 		_worldScale.setFromMatrixScale( this.matrixWorld );
 
-		_viewWorldMatrix.copy( raycaster._camera.matrixWorld );
-		this.modelViewMatrix.multiplyMatrices( raycaster._camera.matrixWorldInverse, this.matrixWorld );
+		_viewWorldMatrix.copy( raycaster.camera.matrixWorld );
+		this.modelViewMatrix.multiplyMatrices( raycaster.camera.matrixWorldInverse, this.matrixWorld );
 
 		_mvPosition.setFromMatrixPosition( this.modelViewMatrix );
 
-		if ( raycaster._camera.isPerspectiveCamera && this.material.sizeAttenuation === false ) {
+		if ( raycaster.camera.isPerspectiveCamera && this.material.sizeAttenuation === false ) {
 
 			_worldScale.multiplyScalar( - _mvPosition.z );
 
 		}
 
-		var rotation = this.material.rotation;
-		var sin, cos;
+		const rotation = this.material.rotation;
+		let sin, cos;
+
 		if ( rotation !== 0 ) {
 
 			cos = Math.cos( rotation );
@@ -102,7 +95,7 @@ Sprite.prototype = Object.assign( Object.create( Object3D.prototype ), {
 
 		}
 
-		var center = this.center;
+		const center = this.center;
 
 		transformVertex( _vA.set( - 0.5, - 0.5, 0 ), _mvPosition, center, _worldScale, sin, cos );
 		transformVertex( _vB.set( 0.5, - 0.5, 0 ), _mvPosition, center, _worldScale, sin, cos );
@@ -113,7 +106,7 @@ Sprite.prototype = Object.assign( Object.create( Object3D.prototype ), {
 		_uvC.set( 1, 1 );
 
 		// check first triangle
-		var intersect = raycaster.ray.intersectTriangle( _vA, _vB, _vC, false, _intersectPoint );
+		let intersect = raycaster.ray.intersectTriangle( _vA, _vB, _vC, false, _intersectPoint );
 
 		if ( intersect === null ) {
 
@@ -130,7 +123,7 @@ Sprite.prototype = Object.assign( Object.create( Object3D.prototype ), {
 
 		}
 
-		var distance = raycaster.ray.origin.distanceTo( _intersectPoint );
+		const distance = raycaster.ray.origin.distanceTo( _intersectPoint );
 
 		if ( distance < raycaster.near || distance > raycaster.far ) return;
 
@@ -146,22 +139,17 @@ Sprite.prototype = Object.assign( Object.create( Object3D.prototype ), {
 
 	},
 
-	clone: function () {
-
-		return new this.constructor( this.material ).copy( this );
-
-	},
-
 	copy: function ( source ) {
 
 		Object3D.prototype.copy.call( this, source );
 
 		if ( source.center !== undefined ) this.center.copy( source.center );
 
+		this.material = source.material;
+
 		return this;
 
 	}
-
 
 } );
 
