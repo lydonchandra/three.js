@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Title</title>
+	<script src="https://twgljs.org/dist/4.x/twgl-full.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.js"></script>
+
+</head>
+<body>
+<canvas width="700px" height="700px"></canvas>
+
+<script>
+	let allPos = [], allColor = [];
+
+	let translate_x = 0, translate_y = 0;
+
+	main();
+
+	function main() {
+
+		const gl = document.querySelector( 'canvas' ).getContext( 'webgl2' );
+
+		if ( !gl ) {
+
+			return alert( "webgl2 not available" );
+		}
+
+		const gui = new dat.GUI( { name: 'My GUI' } );
+
+		const params = {
+			x: 0
+			, y: 0
+		}
+
+		function update() {
+			translate_x = - params.x;
+			translate_y = params.y;
+
+			render( gl, { isNewVertex: false } );
+		}
+
+		gui.add( params, 'x', 0, 100, 1 ).onChange( update );
+		gui.add( params, 'y', 0, 100, 1 ).onChange( update );
+
+		render( gl, { isNewVertex: true } );
+	}
+
+	function render( gl, { isNewVertex = true } ) {
+
+		const vertShader =
+				`
+attribute vec2 a_pos;
+
+uniform vec2 u_resolu;
+
+uniform vec2 u_translation;
+
+void main() {
+
+	vec2 a_pos_translated = a_pos - u_translation;
+
+	vec2 zeroToOne = a_pos_translated / u_resolu;
+
+	vec2 zeroToTwo = zeroToOne * 2.0;
+
+	vec2 clipSpaceBottomLeft = zeroToTwo - 1.0;
+
+	vec2 clipSpaceTopLeft = clipSpaceBottomLeft * vec2( 1, -1 );
+
+	gl_Position = vec4( clipSpaceTopLeft, 0, 1 );
+
+}
+`
+		const fragShader =
+				`
+precision mediump float;
+
+uniform vec4 u_color;
+
+void main() {
+
+	gl_FragColor = u_color;
+
+}
+`
+		const program = twgl.createProgram( gl, [ vertShader, fragShader ] );
+
+		const posAttribLoc = gl.getAttribLocation( program, "a_pos" );
+
+		gl.enableVertexAttribArray( posAttribLoc );
+
+		const resoluUniformLoc = gl.getUniformLocation( program, "u_resolu" );
+
+		const colorUniformLoc = gl.getUniformLocation( program, "u_color" );
+
+		const translationUniformLoc = gl.getUniformLocation( program, "u_translation" );
+
+		const posBuffer = gl.createBuffer();
+
+		gl.bindBuffer( gl.ARRAY_BUFFER, posBuffer );
+
+		const pos = [
+			10, 20,
+			80, 20,
+			10, 30,
+			10, 30,
+			80, 20,
+			80, 30
+		];
+
+		gl.bufferData( gl.ARRAY_BUFFER
+				, new Float32Array( pos )
+				, gl.STATIC_DRAW );
+
+		const size = 2;
+		const type = gl.FLOAT;
+		const normalize = false;
+		const stride = 0;
+		const offsetVert = 0;
+
+		gl.vertexAttribPointer(
+				posAttribLoc, size, type, normalize, stride, offsetVert
+		);
+
+		gl.useProgram( program );
+
+		gl.uniform2f( resoluUniformLoc, gl.canvas.width, gl.canvas.height );
+
+		gl.uniform4f( colorUniformLoc, 0.0, 1.0, 0.0, 1.0 );
+
+		gl.uniform2f( translationUniformLoc, 1, 1 );
+
+		// const offset = 0;
+		// const count = 6;
+		// gl.drawArrays( gl.TRIANGLES, offset, count );
+
+		const maxCount = 50;
+
+		if( isNewVertex === true ) {
+
+			for ( let idx = 0; idx < maxCount; idx++ ) {
+
+				const vert1 = getVertexRandom();
+
+				const vert2 = getVertexRandom();
+
+				const vert3 = getVertexRandom();
+
+				const pos = vert1.concat( vert2 )
+								 .concat( vert3 );
+
+				console.debug( 'pos', pos )
+
+				allPos.push( ...pos );
+
+				const color = getColorRandom();
+
+				allColor.push( color );
+			}
+		}
+
+		// const color = getColorRandom();
+		// gl.uniform4f( colorUniformLoc, color.r, color.g, color.b, color.a );
+		//
+		// gl.bufferData( gl.ARRAY_BUFFER
+		// 		, new Float32Array( window.allPos )
+		// 		, gl.STATIC_DRAW );
+
+		console.debug(  'allPos', allPos )
+
+		for( let idx = 0; idx < maxCount; idx ++  )
+		{
+			const offset = idx * 3;
+			const count = 3;
+
+			const color = allColor[ idx ];
+
+			gl.uniform4f( colorUniformLoc, color.r, color.g, color.b, color.a )
+
+			gl.uniform2f( translationUniformLoc, translate_x, translate_y );
+
+			gl.bufferData( gl.ARRAY_BUFFER
+					, new Float32Array( allPos )
+					, gl.STATIC_DRAW );
+
+
+			gl.drawArrays( gl.TRIANGLES, offset, count );
+		}
+	}
+
+
+	function getColorRandom() {
+		return {
+			r: Math.random()
+			, g: Math.random()
+			, b: Math.random()
+			, a: 1
+		}
+	}
+
+	function getVertexRandom( maxPx = 500 )
+	{
+		return [
+			parseInt( ( maxPx * Math.random() ).toFixed( 0 ) )
+			, parseInt( ( maxPx * Math.random() ).toFixed( 0 ) )
+		]
+	}
+
+	function onWindowResize( ) {
+		console.log( 'onWindowResize' )
+	}
+
+	window.addEventListener( 'resize', onWindowResize, false )
+
+</script>
+</body>
+</html>
